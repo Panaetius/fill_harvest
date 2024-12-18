@@ -43,22 +43,33 @@ def get_project_assignments() -> dict:
 
 
 def fill_weeks(
-    user_id: int, project_id: int, task_id: int, start: int, end: int, weekly_hours: int
+    user_id: int,
+    project_id: int,
+    task_id: int,
+    start: int,
+    end: int,
+    weekly_hours: int,
+    days: list[int],
 ):
     logging.info("filling weeks")
     for w in range(start, end + 1):
-        fill_week(user_id, project_id, task_id, w, weekly_hours)
+        fill_week(user_id, project_id, task_id, w, weekly_hours, days)
 
 
 def fill_week(
-    user_id: int, project_id: int, task_id: int, week: int, weekly_hours: int
+    user_id: int,
+    project_id: int,
+    task_id: int,
+    week: int,
+    weekly_hours: int,
+    days: list[int],
 ):
-    logging.info(f"filling week {week} with {weekly_hours} hours")
-    daily_hours = weekly_hours / 5
+    logging.info(f"filling week {week} with {weekly_hours} hours on days {days}")
+    daily_hours = weekly_hours / len(days)
 
     start_date = datetime.date.fromisocalendar(datetime.date.today().year, week, 1)
 
-    for i in range(5):
+    for i in days:
         body = {
             "user_id": user_id,
             "project_id": project_id,
@@ -79,6 +90,7 @@ def main():
     parser.add_argument("task_name")
     parser.add_argument("start_week", type=int)
     parser.add_argument("end_week", type=int)
+    parser.add_argument("-d", "--days", action="append", type=int)
 
     args = parser.parse_args()
 
@@ -116,6 +128,10 @@ def main():
         logging.error(f"Couldn't find task, available tasks: {tasks}")
         return
 
+    days = args.days
+    if args.days is None:
+        days = [0, 1, 2, 3, 4]
+
     fill_weeks(
         user_id,
         project["project"]["id"],
@@ -123,6 +139,7 @@ def main():
         args.start_week,
         args.end_week,
         args.weekly_hours,
+        days,
     )
 
 
